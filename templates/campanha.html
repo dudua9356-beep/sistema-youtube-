@@ -19,13 +19,13 @@ h1 {
     margin-bottom: 20px;
 }
 
-#videoFrame,
-#giveawayFrame {
+iframe {
     width: 100%;
     max-width: 900px;
     height: 500px;
     border: none;
     border-radius: 10px;
+    background: #111;
 }
 
 #timer {
@@ -49,30 +49,78 @@ h1 {
 
 <h1>{{ name }}</h1>
 
-<!-- Etapa 1: Vídeo -->
+<!-- Vídeo -->
 <div id="videoContainer">
     <iframe
         id="videoFrame"
-        src="{{ youtube_url }}"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
         allowfullscreen>
     </iframe>
 
     <div id="timer">Aguarde 30 segundos...</div>
+
     <p id="status">
         Assista ao vídeo, deixe o like e se inscreva no canal.
     </p>
 </div>
 
-<!-- Etapa 2: Sorteio -->
+<!-- Sorteio -->
 <div id="giveawayContainer">
     <h2>🎉 Sorteio liberado!</h2>
+
     <iframe
         id="giveawayFrame"
-        src="{{ giveaway_url }}">
+        sandbox="allow-same-origin allow-scripts allow-forms allow-popups">
     </iframe>
+
+    <p style="margin-top:15px;">
+        Se o sorteio não carregar no quadro abaixo,
+        <a id="openLink" href="#" target="_blank" style="color:#00ff88;">
+            clique aqui para abrir.
+        </a>
+    </p>
 </div>
 
 <script>
+const youtubeUrl = {{ youtube_url|tojson }};
+const giveawayUrl = {{ giveaway_url|tojson }};
+
+// Converte links comuns do YouTube para /embed/
+function toYoutubeEmbed(url) {
+    try {
+        const u = new URL(url);
+
+        // youtube.com/watch?v=ID
+        if (u.hostname.includes("youtube.com")) {
+            const v = u.searchParams.get("v");
+            if (v) {
+                return `https://www.youtube.com/embed/${v}`;
+            }
+
+            // já está em /embed/
+            if (u.pathname.startsWith("/embed/")) {
+                return url;
+            }
+        }
+
+        // youtu.be/ID
+        if (u.hostname.includes("youtu.be")) {
+            const id = u.pathname.replace("/", "");
+            return `https://www.youtube.com/embed/${id}`;
+        }
+
+        return url;
+    } catch {
+        return url;
+    }
+}
+
+// Define URLs nos iframes
+document.getElementById("videoFrame").src = toYoutubeEmbed(youtubeUrl);
+document.getElementById("giveawayFrame").src = giveawayUrl;
+document.getElementById("openLink").href = giveawayUrl;
+
+// Contagem regressiva
 let segundos = 30;
 const timer = document.getElementById("timer");
 
