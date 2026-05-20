@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Painel</title>
+<style>
+body{background:#111;color:#fff;font-family:Arial;padding:20px}
+input,button{padding:10px;margin:5px;width:100%;max-width:500px}
+button{background:#00d084;border:none;color:#fff;cursor:pointer}
+a{color:#00d084}
+.card{background:#222;padding:15px;margin-top:10px;border-radius:8px}
+</style>
+</head>
+<body>
+<h1>📊 Painel</h1>
+
+<form method="POST">
+<input type="text" name="name" placeholder="Nome da campanha" required>
+<input type="text" name="youtube_url" placeholder="Link do vídeo do YouTube" required>
+<input type="text" name="giveaway_url" placeholder="Link do sorteio" required>
+<button type="submit">Criar campanha</button>
+</form>
+
+<h2>Campanhas</h2>
+
+{% for c in campaigns %}
+<div class="card">
+<strong>{{ c[0] }}</strong><br>
+<a target="_blank" href="/campanha/{{ c[1] }}">
+https://seusite.onrender.com/campanha/{{ c[1] }}
+</a>
+</div>
+{% endfor %}
+
+<br>
+<a href="/logout">Sair</a>
+</body>
+</html>
