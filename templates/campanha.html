@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>{{ name }}</title>
+<style>
+body{background:#000;color:#fff;font-family:Arial;text-align:center;padding:20px}
+iframe{width:100%;max-width:900px;height:500px;border:none}
+button{padding:12px 20px;background:#00d084;border:none;color:#fff;cursor:pointer;margin:20px}
+</style>
+</head>
+<body>
+
+<h1>{{ name }}</h1>
+
+{% if not liberar %}
+<iframe src="{{ youtube_url }}"></iframe>
+
+<form method="POST">
+<button type="submit">✅ Já deixei o like e me inscrevi</button>
+</form>
+{% else %}
+<h2>🎉 Sorteio liberado!</h2>
+<iframe src="{{ giveaway_url }}"></iframe>
+{% endif %}
+
+</body>
+</html>
