@@ -2,37 +2,92 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Painel</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel Administrativo</title>
 <style>
-body{background:#111;color:#fff;font-family:Arial;padding:20px}
-input,button{padding:10px;margin:5px;width:100%;max-width:500px}
-button{background:#00d084;border:none;color:#fff;cursor:pointer}
-a{color:#00d084}
-.card{background:#222;padding:15px;margin-top:10px;border-radius:8px}
+body{
+    margin:0;
+    font-family:Arial, sans-serif;
+    background:#111;
+    color:white;
+}
+.container{
+    max-width:1000px;
+    margin:30px auto;
+    padding:20px;
+}
+.card{
+    background:#1e1e1e;
+    padding:25px;
+    border-radius:12px;
+    margin-bottom:30px;
+}
+input{
+    width:100%;
+    padding:12px;
+    margin:8px 0;
+    border:none;
+    border-radius:6px;
+}
+button{
+    background:#00c853;
+    color:white;
+    border:none;
+    padding:12px 25px;
+    border-radius:6px;
+    font-weight:bold;
+    cursor:pointer;
+}
+a{
+    color:#4fc3f7;
+    text-decoration:none;
+}
+.campanha{
+    border-bottom:1px solid #333;
+    padding:10px 0;
+}
 </style>
 </head>
 <body>
-<h1>📊 Painel</h1>
+<div class="container">
 
-<form method="POST">
-<input type="text" name="name" placeholder="Nome da campanha" required>
-<input type="text" name="youtube_url" placeholder="Link do vídeo do YouTube" required>
-<input type="text" name="giveaway_url" placeholder="Link do sorteio" required>
-<button type="submit">Criar campanha</button>
-</form>
+    <h1>📊 Painel Administrativo</h1>
+    <p>Bem-vindo, {{ usuario.name }} ({{ usuario.email }})</p>
+    <p><a href="/logout">Sair</a></p>
 
-<h2>Campanhas</h2>
+    <div class="card">
+        <h2>➕ Criar Nova Campanha</h2>
 
-{% for c in campaigns %}
-<div class="card">
-<strong>{{ c[0] }}</strong><br>
-<a target="_blank" href="/campanha/{{ c[1] }}">
-https://seusite.onrender.com/campanha/{{ c[1] }}
-</a>
+        <form method="POST" action="/criar">
+            <input type="text" name="slug"
+                   placeholder="Slug (ex: money-bum)" required>
+
+            <input type="text" name="name"
+                   placeholder="Nome da campanha" required>
+
+            <input type="text" name="youtube_url"
+                   placeholder="Link do vídeo do YouTube" required>
+
+            <input type="text" name="giveaway_url"
+                   placeholder="Link do sorteio" required>
+
+            <button type="submit">Criar Campanha</button>
+        </form>
+    </div>
+
+    <div class="card">
+        <h2>📁 Campanhas Criadas</h2>
+
+        {% for slug, campanha in campanhas.items() %}
+        <div class="campanha">
+            <strong>{{ campanha.name }}</strong><br>
+            <a href="/campanha/{{ slug }}" target="_blank">
+                /campanha/{{ slug }}
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+
 </div>
-{% endfor %}
-
-<br>
-<a href="/logout">Sair</a>
 </body>
 </html>
