@@ -1,4 +1,3 @@
-<!-- templates/campanha.html -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -7,77 +6,50 @@
 <title>{{ name }}</title>
 
 <style>
-* {
-    box-sizing: border-box;
+body{
+    margin:0;
+    padding:20px;
+    background:#000;
+    color:#fff;
+    font-family:Arial, sans-serif;
 }
 
-body {
-    margin: 0;
-    padding: 20px;
-    background: #000;
-    color: #fff;
-    font-family: Arial, sans-serif;
+.container{
+    max-width:600px;
+    margin:0 auto;
+    background:#111;
+    border-radius:15px;
+    padding:25px;
+    text-align:center;
+    box-shadow:0 0 20px rgba(0,0,0,.5);
 }
 
-.container {
-    max-width: 600px;
-    margin: 0 auto;
-    background: #111;
-    border-radius: 12px;
-    padding: 25px;
-    text-align: center;
-    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+h1{
+    margin-top:0;
 }
 
-h1 {
-    margin-top: 0;
-    font-size: 32px;
+a.botao{
+    display:block;
+    width:100%;
+    padding:15px;
+    margin:15px 0;
+    background:#ff0000;
+    color:#fff;
+    text-decoration:none;
+    border-radius:10px;
+    font-size:18px;
+    font-weight:bold;
 }
 
-p {
-    color: #ccc;
-    line-height: 1.5;
+#status{
+    margin-top:20px;
+    font-size:20px;
+    font-weight:bold;
+    color:#ffd700;
 }
 
-.video-box {
-    position: relative;
-    width: 100%;
-    padding-bottom: 56.25%;
-    margin: 20px 0;
-    border-radius: 10px;
-    overflow: hidden;
-}
-
-.video-box iframe {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    border: 0;
-}
-
-.status {
-    margin-top: 20px;
-    font-size: 20px;
-    font-weight: bold;
-    color: #ffd700;
-}
-
-.progress {
-    width: 100%;
-    height: 10px;
-    background: #333;
-    border-radius: 10px;
-    overflow: hidden;
-    margin-top: 15px;
-}
-
-.bar {
-    width: 0%;
-    height: 100%;
-    background: #00ff66;
-    transition: width 1s linear;
+.oculto{
+    display:none;
 }
 </style>
 </head>
@@ -87,44 +59,66 @@ p {
     <h1>{{ name }}</h1>
 
     <p>
-        Assista à live, deixe o like e mantenha-se inscrito no canal.
+        1️⃣ Clique no botão abaixo para abrir a live.<br>
+        2️⃣ Deixe o like e se inscreva no canal.<br>
+        3️⃣ Volte para esta página.<br>
+        4️⃣ Clique em "Já fiz tudo".
     </p>
 
-    <div class="video-box">
-        <iframe
-            src="{{ youtube_url | replace('watch?v=', 'embed/') }}"
-            allowfullscreen>
-        </iframe>
-    </div>
+    <!-- BOTÃO QUE ABRE A LIVE -->
+    <a
+        href="{{ youtube_url }}"
+        target="_blank"
+        class="botao"
+    >
+        🔴 Abrir Live no YouTube
+    </a>
 
-    <div class="status" id="status">
-        ⏳ Verificando... 20s
-    </div>
+    <!-- BOTÃO DE VERIFICAÇÃO -->
+    <button
+        id="btnVerificar"
+        onclick="verificar()"
+        style="
+            width:100%;
+            padding:15px;
+            border:none;
+            border-radius:10px;
+            background:#ffd700;
+            color:#000;
+            font-size:18px;
+            font-weight:bold;
+            cursor:pointer;
+        "
+    >
+        ✅ Já fiz tudo
+    </button>
 
-    <div class="progress">
-        <div class="bar" id="bar"></div>
+    <!-- STATUS -->
+    <div id="status" class="oculto">
+        ⏳ Verificando...
     </div>
 </div>
 
 <script>
-let segundos = 20;
-const status = document.getElementById("status");
-const bar = document.getElementById("bar");
+function verificar() {
+    document.getElementById("btnVerificar").style.display = "none";
+    document.getElementById("status").classList.remove("oculto");
 
-const intervalo = setInterval(function() {
-    segundos--;
+    let segundos = 5;
+    const status = document.getElementById("status");
 
-    const progresso = ((20 - segundos) / 20) * 100;
-    bar.style.width = progresso + "%";
+    const intervalo = setInterval(function() {
+        segundos--;
 
-    if (segundos > 0) {
-        status.innerHTML = "⏳ Verificando... " + segundos + "s";
-    } else {
-        clearInterval(intervalo);
-        status.innerHTML = "🎉 Sorteio liberado!";
-        window.location.href = "{{ giveaway_url }}";
-    }
-}, 1000);
+        if (segundos > 0) {
+            status.innerHTML = "⏳ Verificando... " + segundos + "s";
+        } else {
+            clearInterval(intervalo);
+            status.innerHTML = "🎉 Sorteio liberado!";
+            window.location.href = "{{ giveaway_url }}";
+        }
+    }, 1000);
+}
 </script>
 
 </body>
