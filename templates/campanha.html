@@ -1,3 +1,9 @@
+<!-- Para acessar o painel, abra:
+https://sistema-youtube.onrender.com/painel
+-->
+
+<!-- SUBSTITUA APENAS O ARQUIVO templates/campanha.html POR ESTE -->
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -53,27 +59,36 @@ button{
 <div class="overlay">
     <div class="box">
         <h1>{{ name }}</h1>
-        <p>Assista ao vídeo, deixe o like e se inscreva no canal.</p>
+        <p>
+            Assista ao vídeo, deixe o like e se inscreva no canal.
+        </p>
 
-        <iframe src="{{ youtube_url | replace('watch?v=', 'embed/') }}"
-                allowfullscreen></iframe>
+        <!-- VÍDEO -->
+        <iframe
+            src="{{ youtube_url | replace('watch?v=', 'embed/') }}"
+            allowfullscreen>
+        </iframe>
 
-        <button onclick="liberar()">✅ Já fiz tudo</button>
-
-        <div id="resultado"></div>
+        <!-- SEM BOTÃO DE LIBERAÇÃO -->
+        <p id="resultado">
+            ⏳ Aguarde 20 segundos com o vídeo aberto...
+        </p>
     </div>
 </div>
 
 <script>
-function liberar(){
-    const r = document.getElementById("resultado");
-    r.innerHTML = "⏳ Aguarde 10 segundos...";
+/*
+  IMPORTANTE:
+  O YouTube não fornece uma API pública para confirmar se o usuário
+  clicou em "Like". Por isso, este template remove o botão
+  "Já fiz tudo" e libera automaticamente após 20 segundos.
+*/
 
-    setTimeout(() => {
-        r.innerHTML = "🎉 Sorteio liberado!";
-        window.open("{{ giveaway_url }}", "_blank");
-    }, 10000);
-}
+setTimeout(function() {
+    document.getElementById("resultado").innerHTML =
+        "🎉 Sorteio liberado!";
+    window.open("{{ giveaway_url }}", "_blank");
+}, 20000);
 </script>
 </body>
 </html>
