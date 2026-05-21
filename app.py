@@ -4,6 +4,7 @@ import requests
 from urllib.parse import urlencode
 
 app = Flask(__name__)
+
 app.secret_key = os.environ.get(
     "SECRET_KEY",
     "minha_chave_super_secreta_123456"
@@ -38,6 +39,7 @@ campanhas = {
 @app.route("/")
 def home():
 
+    # se estiver logado vai pro painel
     if session.get("google_user"):
         return redirect(url_for("painel"))
 
@@ -87,6 +89,7 @@ def oauth2callback():
     if not code:
         return "Código não recebido."
 
+    # pega token
     token_response = requests.post(
         "https://oauth2.googleapis.com/token",
         data={
@@ -104,8 +107,9 @@ def oauth2callback():
     access_token = token_data.get("access_token")
 
     if not access_token:
-        return f"Erro: {token_data}"
+        return f"Erro ao obter token: {token_data}"
 
+    # pega usuário
     user_response = requests.get(
         "https://www.googleapis.com/oauth2/v1/userinfo",
         headers={
@@ -116,6 +120,7 @@ def oauth2callback():
 
     user_data = user_response.json()
 
+    # salva sessão
     session["google_user"] = {
         "name": user_data.get("name", "Usuário"),
         "email": user_data.get("email", "")
@@ -123,6 +128,7 @@ def oauth2callback():
 
     session["is_subscribed"] = True
 
+    # volta pra campanha se existir
     next_slug = session.pop("next_slug", None)
 
     if next_slug:
@@ -187,6 +193,7 @@ def campanha(slug):
     if slug not in campanhas:
         return "Campanha não encontrada.", 404
 
+    # força login
     if not session.get("google_user"):
         session["next_slug"] = slug
         return redirect(url_for("home"))
@@ -213,7 +220,7 @@ def marcar_verificado(slug):
     if not session.get("google_user"):
         return redirect(url_for("home"))
 
-    # Libera acesso temporário
+    # libera acesso temporário
     session[f"acesso_{slug}"] = True
 
     return "ok"
@@ -228,20 +235,22 @@ def liberar_sorteio(slug):
     if slug not in campanhas:
         return "Campanha não encontrada.", 404
 
+    # precisa estar logado
     if not session.get("google_user"):
         return redirect(url_for("home"))
 
-    # Verifica se passou pela verificação
+    # verifica se passou pela verificação
     acesso = session.get(f"acesso_{slug}")
 
     if not acesso:
 
-    # força a pessoa voltar pro início do fluxo
-    session.pop(f"acesso_{slug}", None)
+        # remove acesso inválido
+        session.pop(f"acesso_{slug}", None)
 
-    return redirect(url_for("home"))
+        # volta pro início
+        return redirect(url_for("home"))
 
-    # Remove o acesso após usar
+    # remove acesso após usar
     session.pop(f"acesso_{slug}", None)
 
     dados = campanhas[slug]
@@ -265,7 +274,7 @@ def logout():
 
 
 # =========================
-# EXECUÇÃO LOCAL
+# EXECUÇÃO
 # =========================
 if __name__ == "__main__":
 
@@ -274,4 +283,4 @@ if __name__ == "__main__":
     app.run(
         host="0.0.0.0",
         port=port
-    )
+)
