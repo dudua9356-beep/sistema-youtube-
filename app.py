@@ -199,20 +199,24 @@ def campanha(slug):
 
 
 # =========================
-# LIBERAR SORTEIO (LINK PROTEGIDO)
+# LIBERAR SORTEIO (PROTEGIDO)
 # =========================
 @app.route("/campanha/<slug>/liberar")
 def liberar_sorteio(slug):
-    # Verifica se a campanha existe
+
     if slug not in campanhas:
         return "Campanha não encontrada.", 404
 
-    # Exige que o usuário esteja logado
     if not session.get("google_user"):
         return redirect(url_for("home"))
 
-    # O link real fica protegido no servidor
-    return redirect(campanhas[slug]["giveaway_url"])
+    dados = campanhas[slug]
+
+    return render_template(
+        "sorteio.html",
+        name=dados["name"],
+        giveaway_url=dados["giveaway_url"]
+    )
 
 
 # =========================
