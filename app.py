@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, session
 import os
 import requests
 from urllib.parse import urlencode
+from datetime import datetime, timedelta
 
 app = Flask(__name__)
 
@@ -28,9 +29,37 @@ campanhas = {
     "money-bum": {
         "name": "Money Bum",
         "youtube_url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-        "giveaway_url": "https://google.com"
+        "giveaway_url": "https://google.com",
+        "created_at": datetime.now()
     }
 }
+
+
+# =========================
+# LIMPAR CAMPANHAS EXPIRADAS
+# =========================
+def limpar_campanhas():
+
+    agora = datetime.now()
+
+    expiradas = []
+
+    for slug, dados in campanhas.items():
+
+        criado = dados.get("created_at")
+
+        if criado:
+
+            diferenca = agora - criado
+
+            # remove após 24 horas
+            if diferenca > timedelta(hours=24):
+
+                expiradas.append(slug)
+
+    for slug in expiradas:
+
+        del campanhas[slug]
 
 
 # =========================
@@ -137,6 +166,8 @@ def oauth2callback():
 @app.route("/painel")
 def painel():
 
+    limpar_campanhas()
+
     if not session.get("google_user"):
         return redirect(url_for("home"))
 
@@ -172,7 +203,8 @@ def criar():
     campanhas[slug] = {
         "name": name,
         "youtube_url": youtube_url,
-        "giveaway_url": giveaway_url
+        "giveaway_url": giveaway_url,
+        "created_at": datetime.now()
     }
 
     return redirect(url_for("painel"))
@@ -183,6 +215,8 @@ def criar():
 # =========================
 @app.route("/campanha/<slug>")
 def campanha(slug):
+
+    limpar_campanhas()
 
     if slug not in campanhas:
         return "Campanha não encontrada.", 404
@@ -210,6 +244,8 @@ def campanha(slug):
 @app.route("/campanha/<slug>/verificado")
 def marcar_verificado(slug):
 
+    limpar_campanhas()
+
     if slug not in campanhas:
         return "Campanha não encontrada.", 404
 
@@ -227,6 +263,8 @@ def marcar_verificado(slug):
 # =========================
 @app.route("/campanha/<slug>/liberar")
 def liberar_sorteio(slug):
+
+    limpar_campanhas()
 
     if slug not in campanhas:
         return "Campanha não encontrada.", 404
