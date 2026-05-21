@@ -1,4 +1,3 @@
-# app.py
 from flask import Flask, render_template, request, redirect, url_for, session
 import os
 import requests
@@ -7,22 +6,12 @@ from urllib.parse import urlencode
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "minha_chave_super_secreta_123456")
 
-# =========================
-# CONFIGURAÇÕES GOOGLE/YOUTUBE
-# =========================
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
 YOUTUBE_CHANNEL_ID = os.environ.get("YOUTUBE_CHANNEL_ID", "@1clipadasmarkola")
+BASE_URL = os.environ.get("BASE_URL", "https://sistema-youtube.onrender.com")
 
-# URL base do Render
-BASE_URL = os.environ.get(
-    "BASE_URL",
-    "https://sistema-youtube.onrender.com"
-)
-
-# =========================
-# CAMPANHAS (EXEMPLO)
-# =========================
+# Campanhas em memória (teste)
 campanhas = {
     "money-bum": {
         "name": "Money Bum",
@@ -31,48 +20,17 @@ campanhas = {
     }
 }
 
+
 # =========================
 # HOME
 # =========================
 @app.route("/")
 def home():
-    # Redireciona para a primeira campanha
-    slug = list(campanhas.keys())[0]
-    return redirect(url_for("campanha", slug=slug))
+    return render_template("login.html")
 
 
 # =========================
-# PÁGINA DA CAMPANHA
-# =========================
-@app.route("/campanha/<slug>")
-def campanha(slug):
-    if slug not in campanhas:
-        return "Campanha não encontrada.", 404
-
-    # Se ainda não fez login
-    if not session.get("google_user"):
-        session["next_slug"] = slug
-        return redirect(url_for("login_google"))
-
-    # Verifica inscrição no canal
-    if not session.get("is_subscribed"):
-        return render_template(
-            "nao_inscrito.html",
-            channel=YOUTUBE_CHANNEL_ID
-        )
-
-    campanha = campanhas[slug]
-
-    return render_template(
-        "campanha.html",
-        name=campanha["name"],
-        youtube_url=campanha["youtube_url"],
-        giveaway_url=campanha["giveaway_url"]
-    )
-
-
-# =========================
-# LOGIN COM GOOGLE
+# LOGIN GOOGLE
 # =========================
 @app.route("/login_google")
 def login_google():
@@ -94,7 +52,7 @@ def login_google():
 
 
 # =========================
-# CALLBACK DO GOOGLE
+# CALLBACK GOOGLE
 # =========================
 @app.route("/oauth2callback")
 def oauth2callback():
@@ -103,7 +61,6 @@ def oauth2callback():
     if not code:
         return "Código de autorização não recebido."
 
-    # Troca code por access_token
     token_response = requests.post(
         "https://oauth2.googleapis.com/token",
         data={
@@ -116,12 +73,11 @@ def oauth2callback():
     )
 
     token_data = token_response.json()
-
     access_token = token_data.get("access_token")
+
     if not access_token:
         return f"Erro ao obter token: {token_data}"
 
-    # Dados do usuário
     user_response = requests.get(
         "https://www.googleapis.com/oauth2/v1/userinfo",
         headers={"Authorization": f"Bearer {access_token}"}
@@ -134,69 +90,15 @@ def oauth2callback():
         "email": user_data.get("email")
     }
 
-    # Verifica inscrição no canal
-    session["is_subscribed"] = verificar_inscricao(access_token)
+    session["is_subscribed"] = True
 
-    # Redireciona para a campanha
-    slug = session.get("next_slug", list(campanhas.keys())[0])
-    return redirect(url_for("campanha", slug=slug))
+    # Se já houver campanha escolhida, vai para ela
+    if session.get("next_slug"):
+        slug = session["next_slug"]
+        return redirect(url_for("campanha", slug=slug))
 
-
-# =========================
-# VERIFICAR INSCRIÇÃO
-# =========================
-def verificar_inscricao(access_token):
-    """
-    Tenta verificar se o usuário está inscrito.
-    Se não conseguir validar, retorna True para facilitar testes.
-    """
-    try:
-        url = (
-            "https://www.googleapis.com/youtube/v3/subscriptions"
-            "?part=snippet&mine=true&maxResults=50"
-        )
-
-        response = requests.get(
-            url,
-            headers={
-                "Authorization": f"Bearer {access_token}"
-            }
-        )
-
-        data = response.json()
-
-        # Se vier erro da API, libera para testes
-        if "items" not in data:
-            print("Não foi possível validar inscrição:", data)
-            return True
-
-        for item in data["items"]:
-            canal = item["snippet"]["resourceId"]["channelId"]
-            titulo = item["snippet"]["title"]
-
-            # Compara pelo ID do canal
-            if canal == YOUTUBE_CHANNEL_ID:
-                return True
-
-            # Também compara pelo @handle ou nome
-            if YOUTUBE_CHANNEL_ID.lower() in titulo.lower():
-                return True
-
-        return False
-
-    except Exception as e:
-        print("Erro ao verificar inscrição:", e)
-        # Durante testes, libera acesso
-        return True
-
-
-# =========================
-# LOGOUT
-# =========================
-@app.route("/logout")
-def logout():
-    session.clear()
-    return redirect(url_for("home"))
+    # Caso contrário, abre o painel
+    return redirect(url_for("painel"))
 
 
 # =========================
@@ -205,7 +107,7 @@ def logout():
 @app.route("/painel")
 def painel():
     if not session.get("google_user"):
-        return redirect(url_for("login_google"))
+        return redirect(url_for("home"))
 
     return render_template(
         "painel.html",
@@ -220,15 +122,15 @@ def painel():
 @app.route("/criar", methods=["POST"])
 def criar():
     if not session.get("google_user"):
-        return redirect(url_for("login_google"))
+        return redirect(url_for("home"))
 
     slug = request.form.get("slug", "").strip()
     name = request.form.get("name", "").strip()
     youtube_url = request.form.get("youtube_url", "").strip()
     giveaway_url = request.form.get("giveaway_url", "").strip()
 
-    if not slug or not name:
-        return "Preencha slug e nome."
+    if not slug or not name or not youtube_url or not giveaway_url:
+        return "Preencha todos os campos."
 
     campanhas[slug] = {
         "name": name,
@@ -237,6 +139,37 @@ def criar():
     }
 
     return redirect(url_for("painel"))
+
+
+# =========================
+# CAMPANHA
+# =========================
+@app.route("/campanha/<slug>")
+def campanha(slug):
+    if slug not in campanhas:
+        return "Campanha não encontrada.", 404
+
+    if not session.get("google_user"):
+        session["next_slug"] = slug
+        return redirect(url_for("home"))
+
+    campanha = campanhas[slug]
+
+    return render_template(
+        "campanha.html",
+        name=campanha["name"],
+        youtube_url=campanha["youtube_url"],
+        giveaway_url=campanha["giveaway_url"]
+    )
+
+
+# =========================
+# LOGOUT
+# =========================
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("home"))
 
 
 # =========================
