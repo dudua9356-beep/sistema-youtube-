@@ -1,3 +1,4 @@
+<!-- templates/campanha.html -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -77,8 +78,8 @@ h1{
         <br><br>
         Deixe o like e se inscreva no canal.
         <br><br>
-        Quando voltar para esta página, o sistema irá verificar
-        automaticamente e liberar o sorteio.
+        Quando você voltar para esta página, o sistema irá
+        verificar automaticamente e liberar o sorteio.
     </p>
 
     <!-- BOTÃO PARA ABRIR A LIVE -->
@@ -103,20 +104,30 @@ h1{
 </div>
 
 <script>
-// Salva no navegador que a pessoa clicou no botão
+let verificando = false;
+
+// Quando clicar no botão, marca que a live foi aberta
 document.getElementById("btnLive").addEventListener("click", function() {
-    localStorage.setItem("abriu_live", "sim");
+    localStorage.setItem("abriu_live_{{ name }}", "1");
 });
 
-// Quando a pessoa volta para a página, inicia a verificação automática
-window.addEventListener("focus", function() {
-    if (localStorage.getItem("abriu_live") === "sim") {
-        iniciarVerificacao();
-        localStorage.removeItem("abriu_live");
+// Quando a página voltar a ficar visível (usuário retornou do YouTube)
+document.addEventListener("visibilitychange", function() {
+    if (document.visibilityState === "visible") {
+        if (localStorage.getItem("abriu_live_{{ name }}") === "1") {
+            localStorage.removeItem("abriu_live_{{ name }}");
+            iniciarVerificacao();
+        }
     }
 });
 
-let verificando = false;
+// Também funciona quando o navegador ganha foco novamente
+window.addEventListener("focus", function() {
+    if (localStorage.getItem("abriu_live_{{ name }}") === "1") {
+        localStorage.removeItem("abriu_live_{{ name }}");
+        iniciarVerificacao();
+    }
+});
 
 function iniciarVerificacao() {
     if (verificando) return;
@@ -126,14 +137,14 @@ function iniciarVerificacao() {
     document.getElementById("status").style.display = "block";
     document.getElementById("progress").style.display = "block";
 
-    let segundos = 5;
+    let segundos = 10;
     const status = document.getElementById("status");
     const bar = document.getElementById("bar");
 
     const intervalo = setInterval(function() {
         segundos--;
 
-        const progresso = ((5 - segundos) / 5) * 100;
+        const progresso = ((10 - segundos) / 10) * 100;
         bar.style.width = progresso + "%";
 
         if (segundos > 0) {
@@ -141,7 +152,10 @@ function iniciarVerificacao() {
         } else {
             clearInterval(intervalo);
             status.innerHTML = "🎉 Sorteio liberado!";
-            window.location.href = "{{ giveaway_url }}";
+
+            // NÃO expõe o link real do sorteio no HTML.
+            // O navegador acessa uma rota do seu servidor.
+            window.location.href = window.location.pathname + "/liberar";
         }
     }, 1000);
 }
