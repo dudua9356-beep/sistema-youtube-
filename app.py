@@ -189,12 +189,30 @@ def campanha(slug):
 
     dados = campanhas[slug]
 
+    # Não enviamos giveaway_url para o HTML
+    # para evitar que o link real apareça no código-fonte.
     return render_template(
         "campanha.html",
         name=dados["name"],
-        youtube_url=dados["youtube_url"],
-        giveaway_url=dados["giveaway_url"]
+        youtube_url=dados["youtube_url"]
     )
+
+
+# =========================
+# LIBERAR SORTEIO (LINK PROTEGIDO)
+# =========================
+@app.route("/campanha/<slug>/liberar")
+def liberar_sorteio(slug):
+    # Verifica se a campanha existe
+    if slug not in campanhas:
+        return "Campanha não encontrada.", 404
+
+    # Exige que o usuário esteja logado
+    if not session.get("google_user"):
+        return redirect(url_for("home"))
+
+    # O link real fica protegido no servidor
+    return redirect(campanhas[slug]["giveaway_url"])
 
 
 # =========================
