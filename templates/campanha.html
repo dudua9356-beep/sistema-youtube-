@@ -106,28 +106,29 @@ h1{
 <script>
 let verificando = false;
 
+// Chave única por campanha usando o nome
+const chave = "abriu_live_{{ name | replace(' ', '_') }}";
+
 // Quando clicar no botão, marca que a live foi aberta
 document.getElementById("btnLive").addEventListener("click", function() {
-    localStorage.setItem("abriu_live_{{ name }}", "1");
+    localStorage.setItem(chave, "1");
 });
 
-// Quando a página voltar a ficar visível (usuário retornou do YouTube)
-document.addEventListener("visibilitychange", function() {
-    if (document.visibilityState === "visible") {
-        if (localStorage.getItem("abriu_live_{{ name }}") === "1") {
-            localStorage.removeItem("abriu_live_{{ name }}");
-            iniciarVerificacao();
-        }
-    }
-});
-
-// Também funciona quando o navegador ganha foco novamente
-window.addEventListener("focus", function() {
-    if (localStorage.getItem("abriu_live_{{ name }}") === "1") {
-        localStorage.removeItem("abriu_live_{{ name }}");
+// Quando o usuário voltar para a aba
+function verificarRetorno() {
+    if (localStorage.getItem(chave) === "1") {
+        localStorage.removeItem(chave);
         iniciarVerificacao();
     }
+}
+
+document.addEventListener("visibilitychange", function() {
+    if (document.visibilityState === "visible") {
+        verificarRetorno();
+    }
 });
+
+window.addEventListener("focus", verificarRetorno);
 
 function iniciarVerificacao() {
     if (verificando) return;
@@ -137,14 +138,14 @@ function iniciarVerificacao() {
     document.getElementById("status").style.display = "block";
     document.getElementById("progress").style.display = "block";
 
-    let segundos = 10;
+    let segundos = 30; // TEMPO DE VERIFICAÇÃO
     const status = document.getElementById("status");
     const bar = document.getElementById("bar");
 
     const intervalo = setInterval(function() {
         segundos--;
 
-        const progresso = ((10 - segundos) / 10) * 100;
+        const progresso = ((30 - segundos) / 30) * 100;
         bar.style.width = progresso + "%";
 
         if (segundos > 0) {
@@ -153,9 +154,9 @@ function iniciarVerificacao() {
             clearInterval(intervalo);
             status.innerHTML = "🎉 Sorteio liberado!";
 
-            // NÃO expõe o link real do sorteio no HTML.
-            // O navegador acessa uma rota do seu servidor.
-            window.location.href = window.location.pathname + "/liberar";
+            // Usa a rota protegida do servidor.
+            // O link real do sorteio não aparece no HTML.
+            window.location.href = "/campanha/{{ request.view_args.slug }}/liberar";
         }
     }, 1000);
 }
