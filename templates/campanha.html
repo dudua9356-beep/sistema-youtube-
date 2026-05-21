@@ -1,3 +1,4 @@
+<!-- templates/campanha.html -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -6,35 +7,77 @@
 <title>{{ name }}</title>
 
 <style>
+* {
+    box-sizing: border-box;
+}
+
 body {
     margin: 0;
-    padding: 0;
+    padding: 20px;
     background: #000;
     color: #fff;
     font-family: Arial, sans-serif;
 }
 
 .container {
-    max-width: 500px;
-    margin: 40px auto;
+    max-width: 600px;
+    margin: 0 auto;
     background: #111;
-    padding: 25px;
     border-radius: 12px;
+    padding: 25px;
     text-align: center;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
 }
 
-iframe {
+h1 {
+    margin-top: 0;
+    font-size: 32px;
+}
+
+p {
+    color: #ccc;
+    line-height: 1.5;
+}
+
+.video-box {
+    position: relative;
     width: 100%;
-    height: 280px;
-    border: none;
-    border-radius: 8px;
+    padding-bottom: 56.25%;
     margin: 20px 0;
+    border-radius: 10px;
+    overflow: hidden;
 }
 
-#status {
-    font-size: 18px;
+.video-box iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+}
+
+.status {
+    margin-top: 20px;
+    font-size: 20px;
     font-weight: bold;
     color: #ffd700;
+}
+
+.progress {
+    width: 100%;
+    height: 10px;
+    background: #333;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-top: 15px;
+}
+
+.bar {
+    width: 0%;
+    height: 100%;
+    background: #00ff66;
+    transition: width 1s linear;
 }
 </style>
 </head>
@@ -44,25 +87,44 @@ iframe {
     <h1>{{ name }}</h1>
 
     <p>
-        Assista à live, deixe o like e permaneça inscrito no canal.
+        Assista à live, deixe o like e mantenha-se inscrito no canal.
     </p>
 
-    <iframe
-        src="{{ youtube_url | replace('watch?v=', 'embed/') }}"
-        allowfullscreen>
-    </iframe>
+    <div class="video-box">
+        <iframe
+            src="{{ youtube_url | replace('watch?v=', 'embed/') }}"
+            allowfullscreen>
+        </iframe>
+    </div>
 
-    <div id="status">
-        ⏳ Verificando...
+    <div class="status" id="status">
+        ⏳ Verificando... 20s
+    </div>
+
+    <div class="progress">
+        <div class="bar" id="bar"></div>
     </div>
 </div>
 
 <script>
-setTimeout(function () {
-    document.getElementById("status").innerHTML =
-        "🎉 Sorteio liberado!";
-    window.location.href = "{{ giveaway_url }}";
-}, 20000);
+let segundos = 20;
+const status = document.getElementById("status");
+const bar = document.getElementById("bar");
+
+const intervalo = setInterval(function() {
+    segundos--;
+
+    const progresso = ((20 - segundos) / 20) * 100;
+    bar.style.width = progresso + "%";
+
+    if (segundos > 0) {
+        status.innerHTML = "⏳ Verificando... " + segundos + "s";
+    } else {
+        clearInterval(intervalo);
+        status.innerHTML = "🎉 Sorteio liberado!";
+        window.location.href = "{{ giveaway_url }}";
+    }
+}, 1000);
 </script>
 
 </body>
