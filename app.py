@@ -22,7 +22,7 @@ BASE_URL = os.environ.get(
 )
 
 # =========================
-# CAMPANHAS (MEMÓRIA)
+# CAMPANHAS
 # =========================
 campanhas = {
     "money-bum": {
@@ -38,10 +38,6 @@ campanhas = {
 # =========================
 @app.route("/")
 def home():
-
-    # se estiver logado vai pro painel
-    if session.get("google_user"):
-        return redirect(url_for("painel"))
 
     return render_template("login.html")
 
@@ -89,7 +85,6 @@ def oauth2callback():
     if not code:
         return "Código não recebido."
 
-    # pega token
     token_response = requests.post(
         "https://oauth2.googleapis.com/token",
         data={
@@ -109,7 +104,6 @@ def oauth2callback():
     if not access_token:
         return f"Erro ao obter token: {token_data}"
 
-    # pega usuário
     user_response = requests.get(
         "https://www.googleapis.com/oauth2/v1/userinfo",
         headers={
@@ -120,7 +114,6 @@ def oauth2callback():
 
     user_data = user_response.json()
 
-    # salva sessão
     session["google_user"] = {
         "name": user_data.get("name", "Usuário"),
         "email": user_data.get("email", "")
@@ -128,12 +121,13 @@ def oauth2callback():
 
     session["is_subscribed"] = True
 
-    # volta pra campanha se existir
     next_slug = session.pop("next_slug", None)
 
+    # volta pra campanha se veio dela
     if next_slug:
         return redirect(url_for("campanha", slug=next_slug))
 
+    # senão vai pro painel
     return redirect(url_for("painel"))
 
 
@@ -193,9 +187,11 @@ def campanha(slug):
     if slug not in campanhas:
         return "Campanha não encontrada.", 404
 
-    # força login
+    # obriga login
     if not session.get("google_user"):
+
         session["next_slug"] = slug
+
         return redirect(url_for("home"))
 
     dados = campanhas[slug]
@@ -237,6 +233,9 @@ def liberar_sorteio(slug):
 
     # precisa estar logado
     if not session.get("google_user"):
+
+        session.clear()
+
         return redirect(url_for("home"))
 
     # verifica se passou pela verificação
@@ -244,8 +243,8 @@ def liberar_sorteio(slug):
 
     if not acesso:
 
-        # remove acesso inválido
-        session.pop(f"acesso_{slug}", None)
+        # limpa tudo
+        session.clear()
 
         # volta pro início
         return redirect(url_for("home"))
@@ -283,4 +282,4 @@ if __name__ == "__main__":
     app.run(
         host="0.0.0.0",
         port=port
-)
+    )
