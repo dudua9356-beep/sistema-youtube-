@@ -235,7 +235,11 @@ def liberar_sorteio(slug):
     acesso = session.get(f"acesso_{slug}")
 
     if not acesso:
-        return redirect(url_for("campanha", slug=slug))
+
+    # força a pessoa voltar pro início do fluxo
+    session.pop(f"acesso_{slug}", None)
+
+    return redirect(url_for("home"))
 
     # Remove o acesso após usar
     session.pop(f"acesso_{slug}", None)
