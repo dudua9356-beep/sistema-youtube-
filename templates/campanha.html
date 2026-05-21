@@ -1,4 +1,3 @@
-<!-- templates/campanha.html -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -71,18 +70,19 @@ h1{
 <body>
 
 <div class="container">
+
     <h1>{{ name }}</h1>
 
     <p>
-        Clique no botão abaixo para abrir a live no YouTube.
+        Clique no botão abaixo para abrir a live.
         <br><br>
         Deixe o like e se inscreva no canal.
         <br><br>
-        Quando você voltar para esta página, o sistema irá
-        verificar automaticamente e liberar o sorteio.
+        Quando voltar para esta página,
+        o sistema irá verificar automaticamente.
     </p>
 
-    <!-- BOTÃO PARA ABRIR A LIVE -->
+    <!-- BOTÃO DA LIVE -->
     <a
         href="{{ youtube_url }}"
         target="_blank"
@@ -97,67 +97,94 @@ h1{
         ⏳ Verificando...
     </div>
 
-    <!-- BARRA DE PROGRESSO -->
+    <!-- PROGRESSO -->
     <div class="progress" id="progress">
         <div class="bar" id="bar"></div>
     </div>
+
 </div>
 
 <script>
 let verificando = false;
 
-// Chave única por campanha usando o nome
-const chave = "abriu_live_{{ name | replace(' ', '_') }}";
+// chave única da campanha
+const chave = "campanha_{{ slug }}";
 
-// Quando clicar no botão, marca que a live foi aberta
+// quando abrir a live
 document.getElementById("btnLive").addEventListener("click", function() {
     localStorage.setItem(chave, "1");
 });
 
-// Quando o usuário voltar para a aba
-function verificarRetorno() {
+// detectar retorno
+function detectarRetorno() {
+
     if (localStorage.getItem(chave) === "1") {
+
         localStorage.removeItem(chave);
+
         iniciarVerificacao();
     }
 }
 
+window.addEventListener("focus", detectarRetorno);
+
 document.addEventListener("visibilitychange", function() {
+
     if (document.visibilityState === "visible") {
-        verificarRetorno();
+
+        detectarRetorno();
     }
 });
 
-window.addEventListener("focus", verificarRetorno);
-
+// iniciar verificação
 function iniciarVerificacao() {
+
     if (verificando) return;
+
     verificando = true;
 
     document.getElementById("btnLive").style.display = "none";
+
     document.getElementById("status").style.display = "block";
+
     document.getElementById("progress").style.display = "block";
 
-    let segundos = 30; // TEMPO DE VERIFICAÇÃO
+    let segundos = 30;
+
     const status = document.getElementById("status");
+
     const bar = document.getElementById("bar");
 
     const intervalo = setInterval(function() {
+
         segundos--;
 
         const progresso = ((30 - segundos) / 30) * 100;
+
         bar.style.width = progresso + "%";
 
         if (segundos > 0) {
-            status.innerHTML = "⏳ Verificando... " + segundos + "s";
-        } else {
-            clearInterval(intervalo);
-            status.innerHTML = "🎉 Sorteio liberado!";
 
-            // Usa a rota protegida do servidor.
-            // O link real do sorteio não aparece no HTML.
-            window.location.href = "/campanha/{{ request.view_args.slug }}/liberar";
+            status.innerHTML =
+                "⏳ Verificando... " + segundos + "s";
+
+        } else {
+
+            clearInterval(intervalo);
+
+            status.innerHTML =
+                "🎉 Sorteio liberado!";
+
+            // marca verificação no servidor
+            fetch("/campanha/{{ slug }}/verificado")
+            .then(() => {
+
+                // libera sorteio protegido
+                window.location.href =
+                    "/campanha/{{ slug }}/liberar";
+            });
         }
+
     }, 1000);
 }
 </script>
