@@ -6,12 +6,17 @@ from urllib.parse import urlencode
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "minha_chave_super_secreta_123456")
 
+# =========================
+# CONFIGURAÇÕES
+# =========================
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
 YOUTUBE_CHANNEL_ID = os.environ.get("YOUTUBE_CHANNEL_ID", "@1clipadasmarkola")
 BASE_URL = os.environ.get("BASE_URL", "https://sistema-youtube.onrender.com")
 
-# Campanhas em memória (teste)
+# =========================
+# CAMPANHAS (em memória)
+# =========================
 campanhas = {
     "money-bum": {
         "name": "Money Bum",
@@ -26,19 +31,34 @@ campanhas = {
 # =========================
 @app.route("/")
 def home():
+    # Se já estiver logado, abre direto o painel
+    if session.get("google_user"):
+        return redirect(url_for("painel"))
+
+    # Caso contrário, mostra a tela de login
     return render_template("login.html")
 
 
 # =========================
-# LOGIN GOOGLE
+# LOGIN COM GOOGLE
 # =========================
 @app.route("/login_google")
 def login_google():
+    # Verifica se as variáveis estão configuradas
+    if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
+        return (
+            "Configure as variáveis GOOGLE_CLIENT_ID e "
+            "GOOGLE_CLIENT_SECRET no Render."
+        )
+
     params = {
         "client_id": GOOGLE_CLIENT_ID,
         "redirect_uri": f"{BASE_URL}/oauth2callback",
         "response_type": "code",
-        "scope": "openid email profile https://www.googleapis.com/auth/youtube.readonly",
+        "scope": (
+            "openid email profile "
+            "https://www.googleapis.com/auth/youtube.readonly"
+        ),
         "access_type": "offline",
         "prompt": "consent"
     }
@@ -61,6 +81,7 @@ def oauth2callback():
     if not code:
         return "Código de autorização não recebido."
 
+    # Troca o code por access token
     token_response = requests.post(
         "https://oauth2.googleapis.com/token",
         data={
@@ -69,7 +90,8 @@ def oauth2callback():
             "code": code,
             "grant_type": "authorization_code",
             "redirect_uri": f"{BASE_URL}/oauth2callback"
-        }
+        },
+        timeout=30
     )
 
     token_data = token_response.json()
@@ -78,26 +100,33 @@ def oauth2callback():
     if not access_token:
         return f"Erro ao obter token: {token_data}"
 
+    # Busca informações do usuário
     user_response = requests.get(
         "https://www.googleapis.com/oauth2/v1/userinfo",
-        headers={"Authorization": f"Bearer {access_token}"}
+        headers={
+            "Authorization": f"Bearer {access_token}"
+        },
+        timeout=30
     )
 
     user_data = user_response.json()
 
+    # Salva dados do usuário na sessão
     session["google_user"] = {
-        "name": user_data.get("name"),
-        "email": user_data.get("email")
+        "name": user_data.get("name", "Usuário"),
+        "email": user_data.get("email", "")
     }
 
+    # Aqui você pode colocar verificação real de inscrição
+    # Por enquanto, libera automaticamente
     session["is_subscribed"] = True
 
-    # Se já houver campanha escolhida, vai para ela
-    if session.get("next_slug"):
-        slug = session["next_slug"]
-        return redirect(url_for("campanha", slug=slug))
+    # Se veio de uma campanha, volta para ela
+    next_slug = session.pop("next_slug", None)
+    if next_slug:
+        return redirect(url_for("campanha", slug=next_slug))
 
-    # Caso contrário, abre o painel
+    # Caso contrário, vai para o painel
     return redirect(url_for("painel"))
 
 
@@ -149,17 +178,22 @@ def campanha(slug):
     if slug not in campanhas:
         return "Campanha não encontrada.", 404
 
+    # Se não estiver logado, salva a campanha e pede login
     if not session.get("google_user"):
         session["next_slug"] = slug
         return redirect(url_for("home"))
 
-    campanha = campanhas[slug]
+    # Se quiser exigir inscrição, descomente:
+    # if not session.get("is_subscribed"):
+    #     return "Você precisa estar inscrito no canal."
+
+    dados = campanhas[slug]
 
     return render_template(
         "campanha.html",
-        name=campanha["name"],
-        youtube_url=campanha["youtube_url"],
-        giveaway_url=campanha["giveaway_url"]
+        name=dados["name"],
+        youtube_url=dados["youtube_url"],
+        giveaway_url=dados["giveaway_url"]
     )
 
 
@@ -173,7 +207,7 @@ def logout():
 
 
 # =========================
-# EXECUÇÃO
+# EXECUÇÃO LOCAL
 # =========================
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
