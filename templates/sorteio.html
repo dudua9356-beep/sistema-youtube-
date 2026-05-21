@@ -1,31 +1,53 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{{ name }}</title>
 
 <style>
 body{
-    margin:0;
-    padding:0;
     background:#000;
-    overflow:hidden;
+    color:#fff;
+    font-family:Arial;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
 }
 
-iframe{
-    width:100vw;
-    height:100vh;
-    border:none;
+.box{
+    background:#111;
+    padding:40px;
+    border-radius:20px;
+    text-align:center;
+}
+
+a{
+    background:#00cc66;
+    padding:15px 30px;
+    border-radius:10px;
+    color:#fff;
+    text-decoration:none;
+    font-size:18px;
 }
 </style>
 </head>
 <body>
 
-<iframe
-    src="{{ giveaway_url }}"
-    allowfullscreen>
-</iframe>
+<div class="box">
+
+<h1>🎉 Sorteio Liberado</h1>
+
+<br>
+
+<a
+href="{{ giveaway_url }}"
+target="_blank"
+>
+Entrar no Sorteio
+</a>
+
+</div>
 
 </body>
 </html>
