@@ -1,167 +1,98 @@
-<!-- templates/painel.html -->
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Painel do Streamer</title>
+<title>Painel</title>
 
 <style>
 body{
-    margin:0;
-    padding:20px;
-    font-family:Arial, sans-serif;
-    background:#0a0a0a;
+    background:#000;
     color:#fff;
-}
-
-.container{
-    max-width:900px;
-    margin:0 auto;
-}
-
-.card{
-    background:#111;
-    padding:25px;
-    border-radius:15px;
-    margin-bottom:20px;
-    box-shadow:0 0 20px rgba(0,0,0,.4);
-}
-
-h1,h2{
-    margin-top:0;
+    font-family:Arial;
+    padding:30px;
 }
 
 input{
     width:100%;
-    padding:12px;
-    margin:10px 0;
+    padding:15px;
+    margin-bottom:15px;
     border:none;
-    border-radius:8px;
-    font-size:16px;
-    box-sizing:border-box;
+    border-radius:10px;
 }
 
 button{
-    width:100%;
-    padding:14px;
-    background:#ffd700;
+    background:#00cc66;
+    color:#fff;
     border:none;
-    border-radius:8px;
-    font-size:18px;
-    font-weight:bold;
-    cursor:pointer;
-}
-
-button:hover{
-    opacity:.9;
-}
-
-.campanha{
-    background:#1b1b1b;
     padding:15px;
     border-radius:10px;
-    margin-top:15px;
+    width:100%;
+    font-size:18px;
 }
 
-.link{
-    word-break:break-all;
-    color:#00ff88;
-    margin-top:10px;
-}
-
-a{
-    color:#00ff88;
-    text-decoration:none;
+.card{
+    background:#111;
+    padding:20px;
+    border-radius:15px;
+    margin-top:20px;
 }
 </style>
 </head>
 <body>
 
-<div class="container">
+<h1>Painel do Streamer</h1>
 
-    <div class="card">
-        <h1>🎥 Painel do Streamer</h1>
-        <p>
-            Olá, {{ usuario.name }} ({{ usuario.email }})
-        </p>
-        <p>
-            Aqui você cria campanhas informando:
-        </p>
-        <ul>
-            <li>🔴 Link da live do YouTube</li>
-            <li>🎁 Link do sorteio</li>
-        </ul>
-        <p>
-            O sistema gera um link protegido para compartilhar com o público.
-        </p>
-        <p>
-            <a href="/logout">🚪 Sair</a>
-        </p>
-    </div>
+<form method="POST" action="/criar">
 
-    <div class="card">
-        <h2>➕ Criar Nova Campanha</h2>
+<input
+type="text"
+name="slug"
+placeholder="slug-da-campanha"
+required
+>
 
-        <form method="POST" action="/criar">
-            <input
-                type="text"
-                name="slug"
-                placeholder="Slug (ex: live-markola)"
-                required
-            >
+<input
+type="text"
+name="name"
+placeholder="Nome da campanha"
+required
+>
 
-            <input
-                type="text"
-                name="name"
-                placeholder="Nome da campanha"
-                required
-            >
+<input
+type="text"
+name="youtube_url"
+placeholder="Link da live"
+required
+>
 
-            <input
-                type="url"
-                name="youtube_url"
-                placeholder="Link da live do YouTube"
-                required
-            >
+<input
+type="text"
+name="giveaway_url"
+placeholder="Link do sorteio"
+required
+>
 
-            <input
-                type="url"
-                name="giveaway_url"
-                placeholder="Link do sorteio"
-                required
-            >
+<button type="submit">
+Criar Campanha
+</button>
 
-            <button type="submit">
-                🚀 Criar Campanha
-            </button>
-        </form>
-    </div>
+</form>
 
-    <div class="card">
-        <h2>📋 Campanhas Criadas</h2>
+<h2>Campanhas Criadas</h2>
 
-        {% if campanhas %}
-            {% for slug, dados in campanhas.items() %}
-                <div class="campanha">
-                    <strong>{{ dados.name }}</strong>
+{% for slug, campanha in campanhas.items() %}
 
-                    <div class="link">
-                        <a
-                            href="{{ request.url_root }}campanha/{{ slug }}"
-                            target="_blank"
-                        >
-                            {{ request.url_root }}campanha/{{ slug }}
-                        </a>
-                    </div>
-                </div>
-            {% endfor %}
-        {% else %}
-            <p>Nenhuma campanha criada ainda.</p>
-        {% endif %}
-    </div>
+<div class="card">
+
+<h3>{{ campanha.name }}</h3>
+
+<p>
+https://sistema-youtube.onrender.com/campanha/{{ slug }}
+</p>
 
 </div>
+
+{% endfor %}
 
 </body>
 </html>
