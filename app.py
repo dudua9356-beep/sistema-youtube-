@@ -23,7 +23,7 @@ BASE_URL = os.environ.get(
 )
 
 # =========================
-# LOGIN DO STREAMER
+# LOGIN STREAMER
 # =========================
 STREAMER_USER = os.environ.get(
     "STREAMER_USER",
@@ -164,8 +164,13 @@ def oauth2callback():
 
     next_slug = session.pop("next_slug", None)
 
+    # volta pra campanha
     if next_slug:
         return redirect(url_for("campanha", slug=next_slug))
+
+    # streamer
+    if session.get("streamer_logado"):
+        return redirect(url_for("painel"))
 
     return redirect(url_for("home"))
 
@@ -262,6 +267,7 @@ def campanha(slug):
     if slug not in campanhas:
         return "Campanha não encontrada.", 404
 
+    # força login
     if not session.get("google_user"):
 
         session["next_slug"] = slug
@@ -279,7 +285,7 @@ def campanha(slug):
 
 
 # =========================
-# MARCAR VERIFICAÇÃO
+# VERIFICADO
 # =========================
 @app.route("/campanha/<slug>/verificado")
 def marcar_verificado(slug):
@@ -292,6 +298,7 @@ def marcar_verificado(slug):
     if not session.get("google_user"):
         return redirect(url_for("home"))
 
+    # libera temporariamente
     session[f"acesso_{slug}"] = True
 
     return "ok"
@@ -308,19 +315,21 @@ def liberar_sorteio(slug):
     if slug not in campanhas:
         return "Campanha não encontrada.", 404
 
+    # precisa login
     if not session.get("google_user"):
 
-        session.clear()
+        session["next_slug"] = slug
 
-        return redirect(url_for("home"))
+        return redirect(url_for("campanha", slug=slug))
 
     acesso = session.get(f"acesso_{slug}")
 
+    # tentou entrar direto
     if not acesso:
 
-        session.clear()
+        session.pop(f"acesso_{slug}", None)
 
-        return redirect(url_for("home"))
+        return redirect(url_for("campanha", slug=slug))
 
     # remove acesso após usar
     session.pop(f"acesso_{slug}", None)
@@ -355,4 +364,4 @@ if __name__ == "__main__":
     app.run(
         host="0.0.0.0",
         port=port
-    )
+          )
