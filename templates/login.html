@@ -9,7 +9,7 @@ name="viewport"
 content="width=device-width, initial-scale=1.0"
 >
 
-<title>Sistema</title>
+<title>Painel Streamer</title>
 
 <style>
 
@@ -34,22 +34,28 @@ body{
     box-shadow:0 0 20px rgba(0,0,0,.5);
 }
 
+h1{
+    margin-bottom:10px;
+}
+
+p{
+    color:#bbb;
+}
+
 a{
     display:block;
-    margin-top:20px;
+    margin-top:25px;
+    background:#ff0000;
     color:white;
     padding:14px;
     text-decoration:none;
     border-radius:10px;
     font-weight:bold;
+    transition:0.3s;
 }
 
-.user{
-    background:#ff0000;
-}
-
-.streamer{
-    background:#333;
+a:hover{
+    opacity:.8;
 }
 
 </style>
@@ -59,20 +65,15 @@ a{
 
 <div class="box">
 
-<h1>Sistema de Sorteio</h1>
+<h1>🎥 Painel do Streamer</h1>
 
-<a
-class="user"
-href="/campanha/Markola"
->
-ENTRAR NO SORTEIO
-</a>
+<p>
+Acesse o painel para criar
+campanhas e links protegidos.
+</p>
 
-<a
-class="streamer"
-href="/painel_login"
->
-PAINEL STREAMER
+<a href="/painel_login">
+ACESSAR PAINEL
 </a>
 
 </div>
