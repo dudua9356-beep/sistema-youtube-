@@ -80,6 +80,23 @@ def limpar_campanhas():
 @app.route("/")
 def home():
 
+    # se veio de campanha e já logou
+    next_slug = session.get("next_slug")
+
+    if next_slug and session.get("google_user"):
+
+        return redirect(
+            url_for(
+                "campanha",
+                slug=next_slug
+            )
+        )
+
+    # streamer
+    if session.get("streamer_logado"):
+
+        return redirect(url_for("painel"))
+
     return render_template("login.html")
 
 
@@ -162,11 +179,16 @@ def oauth2callback():
 
     session["is_subscribed"] = True
 
-    next_slug = session.pop("next_slug", None)
+    next_slug = session.get("next_slug")
 
     # volta pra campanha
     if next_slug:
-        return redirect(url_for("campanha", slug=next_slug))
+        return redirect(
+            url_for(
+                "campanha",
+                slug=next_slug
+            )
+        )
 
     # streamer
     if session.get("streamer_logado"):
@@ -298,7 +320,6 @@ def marcar_verificado(slug):
     if not session.get("google_user"):
         return redirect(url_for("home"))
 
-    # libera temporariamente
     session[f"acesso_{slug}"] = True
 
     return "ok"
@@ -320,7 +341,12 @@ def liberar_sorteio(slug):
 
         session["next_slug"] = slug
 
-        return redirect(url_for("campanha", slug=slug))
+        return redirect(
+            url_for(
+                "campanha",
+                slug=slug
+            )
+        )
 
     acesso = session.get(f"acesso_{slug}")
 
@@ -329,7 +355,12 @@ def liberar_sorteio(slug):
 
         session.pop(f"acesso_{slug}", None)
 
-        return redirect(url_for("campanha", slug=slug))
+        return redirect(
+            url_for(
+                "campanha",
+                slug=slug
+            )
+        )
 
     # remove acesso após usar
     session.pop(f"acesso_{slug}", None)
@@ -364,4 +395,4 @@ if __name__ == "__main__":
     app.run(
         host="0.0.0.0",
         port=port
-          )
+    )
