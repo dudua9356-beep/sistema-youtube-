@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 app = Flask(__name__)
 
 # =========================
-# PROXY FIX RENDER
+# PROXY RENDER
 # =========================
 app.wsgi_app = ProxyFix(
     app.wsgi_app,
@@ -24,9 +24,9 @@ app.secret_key = os.environ.get(
     "minha_chave_super_secreta_123456"
 )
 
-app.config["SESSION_COOKIE_SECURE"] = True
 app.config["SESSION_COOKIE_HTTPONLY"] = True
-app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+app.config["SESSION_COOKIE_SAMESITE"] = "None"
+app.config["SESSION_COOKIE_SECURE"] = True
 
 app.permanent_session_lifetime = timedelta(days=1)
 
@@ -252,6 +252,15 @@ def criar():
     youtube_url = request.form.get("youtube_url", "").strip()
     giveaway_url = request.form.get("giveaway_url", "").strip()
 
+    if (
+        not slug
+        or not name
+        or not youtube_url
+        or not giveaway_url
+    ):
+
+        return "Preencha todos os campos."
+
     campanhas[slug] = {
         "name": name,
         "youtube_url": youtube_url,
@@ -296,6 +305,16 @@ def campanha(slug):
 @app.route("/campanha/<slug>/verificado")
 def verificado(slug):
 
+    if slug not in campanhas:
+
+        return "Campanha não encontrada.", 404
+
+    if not session.get("google_user"):
+
+        return redirect(
+            f"/login_google?slug={slug}"
+        )
+
     session[f"acesso_{slug}"] = True
 
     return "ok"
@@ -306,6 +325,10 @@ def verificado(slug):
 # =========================
 @app.route("/campanha/<slug>/liberar")
 def liberar(slug):
+
+    if slug not in campanhas:
+
+        return "Campanha não encontrada.", 404
 
     if not session.get(f"acesso_{slug}"):
 
@@ -347,4 +370,4 @@ if __name__ == "__main__":
     app.run(
         host="0.0.0.0",
         port=port
-    )
+        )
