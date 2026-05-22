@@ -95,6 +95,11 @@ def home():
 @app.route("/login_google")
 def login_google():
 
+    slug = request.args.get("slug")
+
+    if slug:
+        session["next_slug"] = slug
+
     if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
 
         return (
@@ -174,7 +179,6 @@ def oauth2callback():
 
     next_slug = session.pop("next_slug", None)
 
-    # volta pra campanha
     if next_slug:
 
         return redirect(
@@ -184,7 +188,6 @@ def oauth2callback():
             )
         )
 
-    # streamer
     if session.get("streamer_logado"):
 
         return redirect(url_for("painel"))
@@ -288,14 +291,11 @@ def campanha(slug):
 
         return "Campanha não encontrada.", 404
 
-    # força login google
     if not session.get("google_user"):
 
-        session.permanent = True
-
-        session["next_slug"] = slug
-
-        return redirect(url_for("login_google"))
+        return redirect(
+            f"/login_google?slug={slug}"
+        )
 
     dados = campanhas[slug]
 
@@ -321,7 +321,9 @@ def marcar_verificado(slug):
 
     if not session.get("google_user"):
 
-        return redirect(url_for("login_google"))
+        return redirect(
+            f"/login_google?slug={slug}"
+        )
 
     session[f"acesso_{slug}"] = True
 
@@ -340,23 +342,15 @@ def liberar_sorteio(slug):
 
         return "Campanha não encontrada.", 404
 
-    # precisa login
     if not session.get("google_user"):
 
-        session["next_slug"] = slug
-
         return redirect(
-            url_for(
-                "login_google"
-            )
+            f"/login_google?slug={slug}"
         )
 
     acesso = session.get(f"acesso_{slug}")
 
-    # tentou entrar direto
     if not acesso:
-
-        session.pop(f"acesso_{slug}", None)
 
         return redirect(
             url_for(
@@ -365,7 +359,6 @@ def liberar_sorteio(slug):
             )
         )
 
-    # remove acesso após usar
     session.pop(f"acesso_{slug}", None)
 
     dados = campanhas[slug]
@@ -398,4 +391,4 @@ if __name__ == "__main__":
     app.run(
         host="0.0.0.0",
         port=port
-        )
+    )
