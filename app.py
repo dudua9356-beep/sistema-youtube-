@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, session
+from werkzeug.middleware.proxy_fix import ProxyFix
 import os
 import requests
 from urllib.parse import urlencode
@@ -6,10 +7,26 @@ from datetime import datetime, timedelta
 
 app = Flask(__name__)
 
+# =========================
+# PROXY FIX RENDER
+# =========================
+app.wsgi_app = ProxyFix(
+    app.wsgi_app,
+    x_proto=1,
+    x_host=1
+)
+
+# =========================
+# CONFIG SESSÃO
+# =========================
 app.secret_key = os.environ.get(
     "SECRET_KEY",
     "minha_chave_super_secreta_123456"
 )
+
+app.config["SESSION_COOKIE_SECURE"] = True
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 
 app.permanent_session_lifetime = timedelta(days=1)
 
@@ -19,23 +36,13 @@ app.permanent_session_lifetime = timedelta(days=1)
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
 
-BASE_URL = os.environ.get(
-    "BASE_URL",
-    "https://sistema-youtube.onrender.com"
-)
+BASE_URL = "https://sistema-youtube.onrender.com"
 
 # =========================
 # LOGIN STREAMER
 # =========================
-STREAMER_USER = os.environ.get(
-    "STREAMER_USER",
-    "admin"
-)
-
-STREAMER_PASSWORD = os.environ.get(
-    "STREAMER_PASSWORD",
-    "Omarkola@321"
-)
+STREAMER_USER = "admin"
+STREAMER_PASSWORD = "Omarkola@321"
 
 # =========================
 # CAMPANHAS
@@ -65,9 +72,7 @@ def limpar_campanhas():
 
         if criado:
 
-            diferenca = agora - criado
-
-            if diferenca > timedelta(hours=24):
+            if agora - criado > timedelta(hours=24):
 
                 expiradas.append(slug)
 
@@ -98,14 +103,8 @@ def login_google():
     slug = request.args.get("slug")
 
     if slug:
+
         session["next_slug"] = slug
-
-    if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
-
-        return (
-            "Configure GOOGLE_CLIENT_ID e "
-            "GOOGLE_CLIENT_SECRET no Render."
-        )
 
     params = {
         "client_id": GOOGLE_CLIENT_ID,
@@ -136,6 +135,7 @@ def oauth2callback():
     code = request.args.get("code")
 
     if not code:
+
         return "Código não recebido."
 
     token_response = requests.post(
@@ -156,7 +156,7 @@ def oauth2callback():
 
     if not access_token:
 
-        return f"Erro ao obter token: {token_data}"
+        return f"Erro token: {token_data}"
 
     user_response = requests.get(
         "https://www.googleapis.com/oauth2/v1/userinfo",
@@ -171,13 +171,11 @@ def oauth2callback():
     session.permanent = True
 
     session["google_user"] = {
-        "name": user_data.get("name", "Usuário"),
-        "email": user_data.get("email", "")
+        "name": user_data.get("name"),
+        "email": user_data.get("email")
     }
 
-    session["is_subscribed"] = True
-
-    next_slug = session.pop("next_slug", None)
+    next_slug = session.get("next_slug")
 
     if next_slug:
 
@@ -187,10 +185,6 @@ def oauth2callback():
                 slug=next_slug
             )
         )
-
-    if session.get("streamer_logado"):
-
-        return redirect(url_for("painel"))
 
     return redirect(url_for("home"))
 
@@ -217,9 +211,7 @@ def painel_login():
 
             return redirect(url_for("painel"))
 
-        else:
-
-            erro = "Login inválido"
+        erro = "Login inválido"
 
     return render_template(
         "painel_login.html",
@@ -259,15 +251,6 @@ def criar():
     name = request.form.get("name", "").strip()
     youtube_url = request.form.get("youtube_url", "").strip()
     giveaway_url = request.form.get("giveaway_url", "").strip()
-
-    if (
-        not slug
-        or not name
-        or not youtube_url
-        or not giveaway_url
-    ):
-
-        return "Preencha todos os campos."
 
     campanhas[slug] = {
         "name": name,
@@ -311,19 +294,7 @@ def campanha(slug):
 # VERIFICADO
 # =========================
 @app.route("/campanha/<slug>/verificado")
-def marcar_verificado(slug):
-
-    limpar_campanhas()
-
-    if slug not in campanhas:
-
-        return "Campanha não encontrada.", 404
-
-    if not session.get("google_user"):
-
-        return redirect(
-            f"/login_google?slug={slug}"
-        )
+def verificado(slug):
 
     session[f"acesso_{slug}"] = True
 
@@ -331,26 +302,12 @@ def marcar_verificado(slug):
 
 
 # =========================
-# LIBERAR SORTEIO
+# LIBERAR
 # =========================
 @app.route("/campanha/<slug>/liberar")
-def liberar_sorteio(slug):
+def liberar(slug):
 
-    limpar_campanhas()
-
-    if slug not in campanhas:
-
-        return "Campanha não encontrada.", 404
-
-    if not session.get("google_user"):
-
-        return redirect(
-            f"/login_google?slug={slug}"
-        )
-
-    acesso = session.get(f"acesso_{slug}")
-
-    if not acesso:
+    if not session.get(f"acesso_{slug}"):
 
         return redirect(
             url_for(
@@ -365,7 +322,6 @@ def liberar_sorteio(slug):
 
     return render_template(
         "sorteio.html",
-        name=dados["name"],
         giveaway_url=dados["giveaway_url"]
     )
 
@@ -378,7 +334,7 @@ def logout():
 
     session.clear()
 
-    return redirect(url_for("painel_login"))
+    return redirect(url_for("home"))
 
 
 # =========================
