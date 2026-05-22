@@ -1,9 +1,15 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Login com Google</title>
+
+<meta
+name="viewport"
+content="width=device-width, initial-scale=1.0"
+>
+
+<title>Login Google</title>
 
 <style>
 
@@ -40,6 +46,7 @@ a{
 }
 
 </style>
+
 </head>
 <body>
 
@@ -51,7 +58,7 @@ a{
 Faça login com sua conta Google para continuar.
 </p>
 
-<a href="/login_google">
+<a href="/login_google?slug={{ session.get('next_slug') }}">
 Entrar com Google
 </a>
 
