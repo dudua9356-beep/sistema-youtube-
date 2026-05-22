@@ -12,7 +12,7 @@ app.secret_key = os.environ.get(
 )
 
 # =========================
-# CONFIG
+# CONFIGURAÇÕES
 # =========================
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
@@ -47,6 +47,7 @@ campanhas = {
     }
 }
 
+
 # =========================
 # LIMPAR CAMPANHAS
 # =========================
@@ -72,30 +73,15 @@ def limpar_campanhas():
 
         del campanhas[slug]
 
+
 # =========================
 # HOME
 # =========================
 @app.route("/")
 def home():
 
-    # streamer logado
-    if session.get("streamer_logado"):
-        return redirect(url_for("painel"))
-
-    # usuário comum
-    if session.get("google_user"):
-
-        next_slug = session.get("next_slug")
-
-        if next_slug:
-            return redirect(
-                url_for(
-                    "campanha",
-                    slug=next_slug
-                )
-            )
-
     return render_template("login.html")
+
 
 # =========================
 # LOGIN GOOGLE
@@ -105,8 +91,8 @@ def login_google():
 
     if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
         return (
-            "Configure GOOGLE_CLIENT_ID "
-            "e GOOGLE_CLIENT_SECRET"
+            "Configure GOOGLE_CLIENT_ID e "
+            "GOOGLE_CLIENT_SECRET no Render."
         )
 
     params = {
@@ -127,6 +113,7 @@ def login_google():
     )
 
     return redirect(auth_url)
+
 
 # =========================
 # CALLBACK GOOGLE
@@ -175,19 +162,19 @@ def oauth2callback():
 
     session["is_subscribed"] = True
 
-    next_slug = session.get("next_slug")
+    next_slug = session.pop("next_slug", None)
 
-    # volta pra campanha correta
+    # se veio da campanha
     if next_slug:
+        return redirect(url_for("campanha", slug=next_slug))
 
-        return redirect(
-            url_for(
-                "campanha",
-                slug=next_slug
-            )
-        )
+    # streamer volta pro painel
+    if session.get("streamer_logado"):
+        return redirect(url_for("painel"))
 
+    # usuário normal
     return redirect(url_for("home"))
+
 
 # =========================
 # LOGIN PAINEL
@@ -220,6 +207,7 @@ def painel_login():
         erro=erro
     )
 
+
 # =========================
 # PAINEL
 # =========================
@@ -235,6 +223,7 @@ def painel():
         "painel.html",
         campanhas=campanhas
     )
+
 
 # =========================
 # CRIAR CAMPANHA
@@ -267,6 +256,7 @@ def criar():
 
     return redirect(url_for("painel"))
 
+
 # =========================
 # CAMPANHA
 # =========================
@@ -278,14 +268,12 @@ def campanha(slug):
     if slug not in campanhas:
         return "Campanha não encontrada.", 404
 
-    # NÃO LOGADO
+    # força login google
     if not session.get("google_user"):
 
-        # salva slug
         session["next_slug"] = slug
 
-        # abre login
-        return render_template("login.html")
+        return redirect(url_for("home"))
 
     dados = campanhas[slug]
 
@@ -295,6 +283,7 @@ def campanha(slug):
         name=dados["name"],
         youtube_url=dados["youtube_url"]
     )
+
 
 # =========================
 # VERIFICADO
@@ -314,6 +303,7 @@ def marcar_verificado(slug):
 
     return "ok"
 
+
 # =========================
 # LIBERAR SORTEIO
 # =========================
@@ -325,31 +315,19 @@ def liberar_sorteio(slug):
     if slug not in campanhas:
         return "Campanha não encontrada.", 404
 
-    # precisa login
     if not session.get("google_user"):
 
-        session["next_slug"] = slug
+        session.clear()
 
-        return redirect(
-            url_for(
-                "campanha",
-                slug=slug
-            )
-        )
+        return redirect(url_for("home"))
 
     acesso = session.get(f"acesso_{slug}")
 
-    # tentou entrar direto
     if not acesso:
 
-        session.pop(f"acesso_{slug}", None)
+        session.clear()
 
-        return redirect(
-            url_for(
-                "campanha",
-                slug=slug
-            )
-        )
+        return redirect(url_for("home"))
 
     # remove acesso após usar
     session.pop(f"acesso_{slug}", None)
@@ -362,6 +340,7 @@ def liberar_sorteio(slug):
         giveaway_url=dados["giveaway_url"]
     )
 
+
 # =========================
 # LOGOUT
 # =========================
@@ -372,8 +351,9 @@ def logout():
 
     return redirect(url_for("painel_login"))
 
+
 # =========================
-# START
+# EXECUÇÃO
 # =========================
 if __name__ == "__main__":
 
@@ -382,4 +362,4 @@ if __name__ == "__main__":
     app.run(
         host="0.0.0.0",
         port=port
-        )
+            )
