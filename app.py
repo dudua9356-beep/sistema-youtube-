@@ -80,17 +80,20 @@ def limpar_campanhas():
 @app.route("/")
 def home():
 
-    # se veio de campanha e já logou
-    next_slug = session.get("next_slug")
+    # se já logou no google
+    if session.get("google_user"):
 
-    if next_slug and session.get("google_user"):
+        # se veio de campanha volta pra ela
+        next_slug = session.get("next_slug")
 
-        return redirect(
-            url_for(
-                "campanha",
-                slug=next_slug
+        if next_slug:
+
+            return redirect(
+                url_for(
+                    "campanha",
+                    slug=next_slug
+                )
             )
-        )
 
     # streamer
     if session.get("streamer_logado"):
@@ -183,6 +186,7 @@ def oauth2callback():
 
     # volta pra campanha
     if next_slug:
+
         return redirect(
             url_for(
                 "campanha",
@@ -289,9 +293,10 @@ def campanha(slug):
     if slug not in campanhas:
         return "Campanha não encontrada.", 404
 
-    # força login
+    # força login google
     if not session.get("google_user"):
 
+        session.permanent = True
         session["next_slug"] = slug
 
         return redirect(url_for("home"))
@@ -395,4 +400,4 @@ if __name__ == "__main__":
     app.run(
         host="0.0.0.0",
         port=port
-    )
+        )
