@@ -9,7 +9,7 @@ name="viewport"
 content="width=device-width, initial-scale=1.0"
 >
 
-<title>Login com Google</title>
+<title>Sistema</title>
 
 <style>
 
@@ -34,29 +34,22 @@ body{
     box-shadow:0 0 20px rgba(0,0,0,.5);
 }
 
-h1{
-    margin-bottom:15px;
-}
-
-p{
-    color:#ccc;
-    line-height:1.5;
-}
-
 a{
-    display:inline-block;
+    display:block;
     margin-top:20px;
-    background:#ff0000;
     color:white;
-    padding:12px 25px;
+    padding:14px;
     text-decoration:none;
-    border-radius:8px;
+    border-radius:10px;
     font-weight:bold;
-    transition:0.3s;
 }
 
-a:hover{
-    opacity:.8;
+.user{
+    background:#ff0000;
+}
+
+.streamer{
+    background:#333;
 }
 
 </style>
@@ -66,15 +59,20 @@ a:hover{
 
 <div class="box">
 
-<h1>🔐 Acesso Protegido</h1>
+<h1>Sistema de Sorteio</h1>
 
-<p>
-Faça login com sua conta Google
-para continuar.
-</p>
+<a
+class="user"
+href="/campanha/Markola"
+>
+ENTRAR NO SORTEIO
+</a>
 
-<a href="/campanha/money-bum">
-ENTRAR
+<a
+class="streamer"
+href="/painel_login"
+>
+PAINEL STREAMER
 </a>
 
 </div>
