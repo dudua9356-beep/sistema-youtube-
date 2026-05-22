@@ -11,6 +11,8 @@ app.secret_key = os.environ.get(
     "minha_chave_super_secreta_123456"
 )
 
+app.permanent_session_lifetime = timedelta(days=1)
+
 # =========================
 # CONFIGURAÇÕES
 # =========================
@@ -80,22 +82,6 @@ def limpar_campanhas():
 @app.route("/")
 def home():
 
-    # se já logou no google
-    if session.get("google_user"):
-
-        # se veio de campanha volta pra ela
-        next_slug = session.get("next_slug")
-
-        if next_slug:
-
-            return redirect(
-                url_for(
-                    "campanha",
-                    slug=next_slug
-                )
-            )
-
-    # streamer
     if session.get("streamer_logado"):
 
         return redirect(url_for("painel"))
@@ -110,6 +96,7 @@ def home():
 def login_google():
 
     if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
+
         return (
             "Configure GOOGLE_CLIENT_ID e "
             "GOOGLE_CLIENT_SECRET no Render."
@@ -163,6 +150,7 @@ def oauth2callback():
     access_token = token_data.get("access_token")
 
     if not access_token:
+
         return f"Erro ao obter token: {token_data}"
 
     user_response = requests.get(
@@ -175,6 +163,8 @@ def oauth2callback():
 
     user_data = user_response.json()
 
+    session.permanent = True
+
     session["google_user"] = {
         "name": user_data.get("name", "Usuário"),
         "email": user_data.get("email", "")
@@ -182,7 +172,7 @@ def oauth2callback():
 
     session["is_subscribed"] = True
 
-    next_slug = session.get("next_slug")
+    next_slug = session.pop("next_slug", None)
 
     # volta pra campanha
     if next_slug:
@@ -196,6 +186,7 @@ def oauth2callback():
 
     # streamer
     if session.get("streamer_logado"):
+
         return redirect(url_for("painel"))
 
     return redirect(url_for("home"))
@@ -242,6 +233,7 @@ def painel():
     limpar_campanhas()
 
     if not session.get("streamer_logado"):
+
         return redirect(url_for("painel_login"))
 
     return render_template(
@@ -257,6 +249,7 @@ def painel():
 def criar():
 
     if not session.get("streamer_logado"):
+
         return redirect(url_for("painel_login"))
 
     slug = request.form.get("slug", "").strip()
@@ -270,6 +263,7 @@ def criar():
         or not youtube_url
         or not giveaway_url
     ):
+
         return "Preencha todos os campos."
 
     campanhas[slug] = {
@@ -291,15 +285,17 @@ def campanha(slug):
     limpar_campanhas()
 
     if slug not in campanhas:
+
         return "Campanha não encontrada.", 404
 
     # força login google
     if not session.get("google_user"):
 
         session.permanent = True
+
         session["next_slug"] = slug
 
-        return redirect(url_for("home"))
+        return redirect(url_for("login_google"))
 
     dados = campanhas[slug]
 
@@ -320,10 +316,12 @@ def marcar_verificado(slug):
     limpar_campanhas()
 
     if slug not in campanhas:
+
         return "Campanha não encontrada.", 404
 
     if not session.get("google_user"):
-        return redirect(url_for("home"))
+
+        return redirect(url_for("login_google"))
 
     session[f"acesso_{slug}"] = True
 
@@ -339,6 +337,7 @@ def liberar_sorteio(slug):
     limpar_campanhas()
 
     if slug not in campanhas:
+
         return "Campanha não encontrada.", 404
 
     # precisa login
@@ -348,8 +347,7 @@ def liberar_sorteio(slug):
 
         return redirect(
             url_for(
-                "campanha",
-                slug=slug
+                "login_google"
             )
         )
 
